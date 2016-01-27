@@ -1078,29 +1078,36 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 				if ((DATA_BYTE0 & 0x08) == 0)
 				{
+					//Teach in datagram
+
+                                                //DB3           DB3/2   DB2/1                   DB0/3           DB0/7
+                                                //Profile       Type    Manufacturer-ID         LRN bit         LRN type        RE2             RE1
+                                                //6 Bit         7 Bit   11 Bit                  1Bit            1Bit            1Bit    1Bit    1Bit    1Bit    1Bit    1Bit
+					
+					int profile;
+					int ttype;
 					if (DATA_BYTE0 & 0x80)
 					{
-						//Teach in datagram
+						profile = DATA_BYTE3 >> 2;
+                                                ttype = ((DATA_BYTE3 & 3) << 5) | (DATA_BYTE2 >> 3);
+					}
+					else
+					{
+						profile = 2; // Temperature sensor
+                                                ttype = 5; // range 0 -> 40
+					}
+					int manufacturer = ((DATA_BYTE2 & 7) << 8) | DATA_BYTE1;
+					_log.Log(LOG_NORM,"EnOcean: 4BS, Teach-in diagram: Sender_ID: 0x%08X\nManufacturer: 0x%02x (%s)\nProfile: 0x%02X\nType: 0x%02X (%s)", 
+						id, manufacturer,Get_EnoceanManufacturer(manufacturer),
+						profile,ttype,Get_Enocean4BSType(0xA5,profile,ttype));
 
-						//DB3		DB3/2	DB2/1			DB0
-						//Profile	Type	Manufacturer-ID	LRN Type	RE2		RE1
-						//6 Bit		7 Bit	11 Bit			1Bit		1Bit	1Bit	1Bit	1Bit	1Bit	1Bit	1Bit
 
-						int manufacturer = ((DATA_BYTE2 & 7) << 8) | DATA_BYTE1;
-						int profile = DATA_BYTE3 >> 2;
-						int ttype = ((DATA_BYTE3 & 3) << 5) | (DATA_BYTE2 >> 3);
-						_log.Log(LOG_NORM,"EnOcean: 4BS, Teach-in diagram: Sender_ID: 0x%08X\nManufacturer: 0x%02x (%s)\nProfile: 0x%02X\nType: 0x%02X (%s)", 
-							id, manufacturer,Get_EnoceanManufacturer(manufacturer),
-							profile,ttype,Get_Enocean4BSType(0xA5,profile,ttype));
-
-
-						std::vector<std::vector<std::string> > result;
-						result = m_sql.safe_query("SELECT ID FROM EnoceanSensors WHERE (HardwareID==%d) AND (DeviceID=='%q')", m_HwdID, szDeviceID);
-						if (result.size()<1)
-						{
-							//Add it to the database
-							m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Profile, [Type]) VALUES (%d,'%q',%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, profile, ttype);
-						}
+					std::vector<std::vector<std::string> > result;
+					result = m_sql.safe_query("SELECT ID FROM EnoceanSensors WHERE (HardwareID==%d) AND (DeviceID=='%q')", m_HwdID, szDeviceID);
+					if (result.size()<1)
+					{
+						//Add it to the database
+						m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Profile, [Type]) VALUES (%d,'%q',%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, profile, ttype);
 					}
 				}
 				else
