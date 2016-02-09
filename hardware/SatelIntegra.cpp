@@ -923,7 +923,7 @@ std::string SatelIntegra::ISO2UTF8(const std::string &name)
 	char utf8[] = "\xC4\x85\xC4\x87\xC4\x99\xC5\x82\xC5\x84\xC3\xB3\xC5\x9B\xC5\xBA\xC5\xBC\xC4\x84\xC4\x86\xC4\x98\xC5\x81\xC5\x83\xC3\x93\xC5\x9A\xC5\xB9\xC5\xBB";
 
 	std::string UTF8Name;
-	for (int i = 0; i < name.length(); ++i)
+	for (size_t i = 0; i < name.length(); ++i)
 	{
 		bool changed = false;
 		for (int j = 0; j < sizeof(cp1250); ++j)
@@ -963,7 +963,7 @@ void SatelIntegra::UpdateZoneName(const unsigned int Idx, const unsigned char* n
 		namePrefix = "Temp";
 	}
 
-	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name=='%q:%q') AND (Unit=1)", m_HwdID, szTmp, namePrefix.c_str(), shortName.c_str());
+	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name!='Unknown') AND (Unit=1)", m_HwdID, szTmp);
 	if (result.size() < 1)
 	{
 		//Assign zone name from Integra
@@ -986,7 +986,7 @@ void SatelIntegra::UpdateTempName(const unsigned int Idx, const unsigned char* n
 	shortName.erase(pos + 1);
 	shortName = ISO2UTF8(shortName);
 
-	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name=='Temp:%q') AND (Unit=0)", m_HwdID, szTmp, shortName.c_str());
+	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name!='Unknown') AND (Unit=0)", m_HwdID, szTmp);
 	if (result.size() < 1)
 	{
 		//Assign zone name from Integra
@@ -1009,7 +1009,7 @@ void SatelIntegra::UpdateOutputName(const unsigned int Idx, const unsigned char*
 	shortName.erase(pos + 1);
 	shortName = ISO2UTF8(shortName);
 
-	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name=='Output:%q') AND (Unit=1)", m_HwdID, szTmp, shortName.c_str());
+	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Name!='Unknown') AND (Unit=1)", m_HwdID, szTmp);
 	if (result.size() < 1)
 	{
 		//Assign output name from Integra
