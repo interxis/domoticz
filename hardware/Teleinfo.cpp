@@ -2,7 +2,7 @@
 Domoticz Software : http://domoticz.com/
 File : Teleinfo.cpp
 Author : Nicolas HILAIRE
-Version : 1.3
+Version : 1.6
 Description : This class manage the Teleinfo Signal
 
 
@@ -12,6 +12,8 @@ History :
 - 2014-12-13 : Add 'Tempo' contract (Kevin NICOLAS)
 - 2015-06-10 : Fix bug power divided by 2 (Christophe DELPECH)
 - 2016-02-05 : Fix bug power display with 'Tempo' contract (Anthony LAGUERRE)
+- 2016-02-11 : Fix power display when PAPP is missing (Anthony LAGUERRE)
+- 2016-02-17 : Fix bug power usage (Anthony LAGUERRE). Thanks to Multinet
 */
 
 #include "stdafx.h"
@@ -27,7 +29,7 @@ History :
 
 #include <ctime>
 
-//Teleinfo for EDF power meter. Only "Base" and "Heures creuses" are suported
+//Teleinfo for EDF power meter.
 
 //Teleinfo official specification :
 //http://www.planete-domotique.com/notices/ERDF-NOI-CPT_O2E.pdf
@@ -130,6 +132,9 @@ void Teleinfo::Init()
 	m_p3power.ID = 3;
 
 	m_counter = 0;
+	m_Power_USAGE_IINST = 0;
+	m_Power_USAGE_IINST_JW = 0;
+	m_Power_USAGE_IINST_JR = 0;
 }
 
 bool Teleinfo::StartHardware()
@@ -238,13 +243,6 @@ void Teleinfo::MatchLine()
 		switch (t.type)
 		{
 		case TELEINFO_TYPE_ADCO:
-			/*
-			//structure initialization
-			memset(&m_p1power,0,sizeof(m_p1power));
-			m_p1power.len=sizeof(P1Power)-1;
-			m_p1power.type=pTypeP1Power;
-			m_p1power.subtype=sTypeP1Power;
-			*/
 			break;
 		case TELEINFO_TYPE_OPTARIF:
 			if (vString.substr (0,3) == "BBR")
@@ -325,8 +323,27 @@ void Teleinfo::MatchLine()
 
 			break;
 		case TELEINFO_TYPE_IINST:
-			//we convert A to W setting RFXMeter/Counter Dividers Energy to 1000 / voltage => 1000/230 = 4.35
-			//m_p1power.usagecurrent = ulValue;
+			if (m_bLabel_PAPP_Exist == false)
+			{
+				if (m_bLabel_PTEC_JW == true)
+				{
+					m_Power_USAGE_IINST = 0;
+                        		m_Power_USAGE_IINST_JW += (ulValue * 230);
+                        		m_Power_USAGE_IINST_JR = 0;
+                        	}
+                		else if (m_bLabel_PTEC_JR == true)
+                        	{
+                        		m_Power_USAGE_IINST = 0;
+                        		m_Power_USAGE_IINST_JW = 0;
+                        		m_Power_USAGE_IINST_JR += (ulValue * 230);
+                        	}
+                        	else
+                        	{
+                        		m_Power_USAGE_IINST += (ulValue * 230);
+                        		m_Power_USAGE_IINST_JW = 0;
+                        		m_Power_USAGE_IINST_JR = 0;
+                        	}
+			}
 			break;
 		case TELEINFO_TYPE_IMAX:
 			break;
@@ -368,6 +385,9 @@ void Teleinfo::MatchLine()
                                         sDecodeRXMessage(this, (const unsigned char *)&m_p2power, NULL, 255);
                                         sDecodeRXMessage(this, (const unsigned char *)&m_p3power, NULL, 255);
                                 }
+                                m_Power_USAGE_IINST = 0;
+				m_Power_USAGE_IINST_JW = 0;
+				m_Power_USAGE_IINST_JR = 0;
                                 m_counter = 0;
                                 m_p1power.usagecurrent = 0;
                                 m_p2power.usagecurrent = 0;
@@ -384,9 +404,9 @@ void Teleinfo::MatchLine()
 					//_log.Log(LOG_NORM,"powerusage1 = %lu", m_p1power.powerusage1);
 					//_log.Log(LOG_NORM,"powerusage2 = %lu", m_p1power.powerusage2);
 					//_log.Log(LOG_NORM,"usagecurrent = %lu", m_p1power.usagecurrent);
-					m_p1power.usagecurrent /= m_counter;
-                                        m_p2power.usagecurrent /= m_counter;
-                                        m_p3power.usagecurrent /= m_counter;
+					m_p1power.usagecurrent = (m_Power_USAGE_IINST / m_counter);
+                        		m_p2power.usagecurrent = (m_Power_USAGE_IINST_JW / m_counter);
+                        		m_p3power.usagecurrent = (m_Power_USAGE_IINST_JR / m_counter);
                                         sDecodeRXMessage(this, (const unsigned char *)&m_p1power, NULL, 255);
                                         if (m_bLabel_Tempo == true)
                                         {
@@ -397,6 +417,9 @@ void Teleinfo::MatchLine()
                                         m_p1power.usagecurrent = 0;
                                         m_p2power.usagecurrent = 0;
                                         m_p3power.usagecurrent = 0;
+                                        m_Power_USAGE_IINST = 0;
+                        		m_Power_USAGE_IINST_JW = 0;
+                        		m_Power_USAGE_IINST_JR = 0;
                                 }
                         }
 			break;

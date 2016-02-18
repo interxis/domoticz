@@ -88,7 +88,7 @@ const char *szHelp=
 	"\t-userdata file_path (for example /opt/domoticz)\n"
 #endif
 	"\t-webroot additional web root, useful with proxy servers (for example domoticz)\n"
-	"\t-verbose x (where x=0 is none, x=1 is debug)\n"
+	"\t-verbose x (where x=0 is none, x=1 is all important, x=2 is debug)\n"
 	"\t-startupdelay seconds (default=0)\n"
 	"\t-nowwwpwd (in case you forgot the web server username/password)\n"
 	"\t-nocache (do not return appcache, use only when developing the web pages)\n"
@@ -268,7 +268,12 @@ void daemonize(const char *rundir, const char *pidfile)
 	sprintf(str, "%d\n", getpid());
 
 	/* write pid to lockfile */
-	write(pidFilehandle, str, strlen(str));
+	int twrite=write(pidFilehandle, str, strlen(str));
+	if (twrite != strlen(str))
+	{
+		syslog(LOG_INFO, "Could not write to lockfile %s, exiting", pidfile);
+		exit(EXIT_FAILURE);
+	}
 
 
 	/* Child continues */
@@ -299,13 +304,25 @@ void daemonize(const char *rundir, const char *pidfile)
 	i = open("/dev/null", O_RDWR);
 
 	/* STDOUT */
-	dup(i);
+	int dret = dup(i);
+	if (dret == -1)
+	{
+		_log.Log(LOG_ERROR, "Could not set STDOUT descriptor !");
+	}
 
 	/* STDERR */
-	dup(i);
+	dret = dup(i);
+	if (dret == -1)
+	{
+		_log.Log(LOG_ERROR, "Could not set STDERR descriptor !");
+	}
 
-	chdir(rundir); /* change running directory */
-} 
+	int cdret = chdir(rundir); /* change running directory */
+	if (dret == -1)
+	{
+		_log.Log(LOG_ERROR, "Could not change running directory !");
+	}
+}
 #endif
 
 #if defined(_WIN32)

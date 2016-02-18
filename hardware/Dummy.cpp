@@ -129,7 +129,7 @@ namespace http {
 			case 6:
 				//Switch
 				{
-					sprintf(ID, "%08X", nid);
+					sprintf(ID, "%08lX", nid);
 					DeviceRowIdx=m_sql.UpdateValue(HwdID, ID, 1, pTypeGeneralSwitch, sSwitchGeneralSwitch, 12, 255, 0, "100", devname);
 					bCreated = true;
 				}
@@ -234,6 +234,15 @@ namespace http {
 					std::string rID = std::string(ID);
 					padLeft(rID, 8, '0');
 					DeviceRowIdx=m_sql.UpdateValue(HwdID, rID.c_str(), 1, pTypeGeneral, sTypeCurrent, 12, 255, 0, "6.4", devname);
+					bCreated = true;
+				}
+				break;
+			case 20:
+				//Solar Radiation
+				{
+					std::string rID = std::string(ID);
+					padLeft(rID, 8, '0');
+					DeviceRowIdx = m_sql.UpdateValue(HwdID, rID.c_str(), 1, pTypeGeneral, sTypeSolarRadiation, 12, 255, 0, "1.0", devname);
 					bCreated = true;
 				}
 				break;
