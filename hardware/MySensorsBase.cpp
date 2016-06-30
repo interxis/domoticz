@@ -959,10 +959,6 @@ void MySensorsBase::SendSensor2Domoticz(_tMySensorNode *pNode, _tMySensorChild *
 		if (pChild->GetValue(vType, floatValue))
 			SendSetPointSensor(pNode->nodeID, pChild->childID, (unsigned char)vType, floatValue, (!pChild->childName.empty()) ? pChild->childName : "Setpoint Cool");
 		break;
-	case V_HVAC_FLOW_STATE:
-		if (pChild->GetValue(vType, intValue))
-			SendSwitchSelectorSensor(pNode->nodeID, pChild->childID, pChild->batValue, intValue, (!pChild->childName.empty()) ? pChild->childName : "Selector Heat");
-                break;
 	case V_TEXT:
 		if (pChild->GetValue(vType, stringValue))
 		{
@@ -1137,19 +1133,6 @@ bool MySensorsBase::GetBlindsValue(const int NodeID, const int ChildID, int &bli
 	return true;
 }
 
-bool MySensorsBase::GetSwitchSelectorValue(const int NodeID, const int ChildID, unsigned int &selector_value)
-{
-        char szIdx[10];
-        sprintf(szIdx, "%02X%02X%02X", 0, 0, NodeID);
-        std::vector<std::vector<std::string> > result;
-        result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)", m_HwdID, szIdx, ChildID);
-        if (result.size() < 1)
-                return false;
-        selector_value = atoi(result[0][0].c_str());
-        return true;
-}
-
-
 bool MySensorsBase::GetSwitchValue(const unsigned char Idx, const int SubUnit, const int sub_type, std::string &sSwitchValue)
 {
 	char szIdx[10];
@@ -1229,7 +1212,6 @@ void MySensorsBase::SendCommandInt(const int NodeID, const int ChildID, const _e
 	std::stringstream sstr;
 	std::string szAck = (UseAck == true) ? "1" : "0";
 	sstr << NodeID << ";" << ChildID << ";" << int(messageType) << ";" <<szAck << ";" << SubType << ";" << Payload << '\n';
-	//_log.Log(LOG_ERROR, "MySensors: SendCommandInt sstr: %s\n", sstr.str().c_str());
 	m_sendQueue.push(sstr.str());
 }
 
@@ -1453,21 +1435,6 @@ bool MySensorsBase::WriteToHardware(const char *pdata, const unsigned char lengt
 				std::stringstream sstr;
 				sstr << ir_code;
 				return SendNodeSetCommand(node_id, pChild->childID, MT_Set, V_IR_SEND, sstr.str(), pChild->useAck);
-			}
-			else {
-				pChild = pNode->FindChildWithPresentationType(S_HEATER);
-				if (pChild)
-				{
-					char szTmp[10];
-					sprintf(szTmp, "%d", pSwitch->level);
-					//std::stringstream sstr;
-					//sstr << pSwitch->level;
-					//_log.Log(LOG_ERROR, "MySensors: len: %d type: %d subtype: %d id: %d unitcode: %d cmnd: %d level: %d rssi: %d bat: %d seq_num: %d res_int: %d res_float: %f szTmp: %s", pSwitch->len, pSwitch->type, pSwitch->subtype, pSwitch->id, pSwitch->unitcode, pSwitch->cmnd,pSwitch->level, pSwitch->battery_level, pSwitch->seqnbr, pSwitch->reserved_int, pSwitch->reserved_float, szTmp);
-					return SendNodeSetCommand(node_id, pChild->childID, MT_Set, V_HVAC_FLOW_STATE, szTmp, pChild->useAck);
-				}
-				else {
-					_log.Log(LOG_ERROR, "MySensors: node_id: %d doesn't support V_IR_RECEIVE type", node_id);
-				}
 			}
 		}
 		else {
@@ -1998,10 +1965,6 @@ void MySensorsBase::ParseLine()
 			vType = V_TEXT;
 			bDoAdd = true;
 			break;
-		case S_HEATER:
-			vType = V_HVAC_FLOW_STATE;
-			bDoAdd = true;
-			break;
 		}
 		_tMySensorNode *pNode = FindNode(node_id);
 		if (pNode == NULL)
@@ -2071,14 +2034,6 @@ void MySensorsBase::ParseLine()
 			if (!bExits)
 			{
 				SendTextSensor(node_id, child_sensor_id, pSensor->batValue, "-", (!pSensor->childName.empty()) ? pSensor->childName : "Text Sensor");
-			}
-		}
-		else if (vType == V_HVAC_FLOW_STATE)
-		{
-			unsigned int selector_value;
-			if (!GetSwitchSelectorValue(node_id, child_sensor_id, selector_value))
-			{
-				SendSwitchSelectorSensor(node_id, child_sensor_id, pSensor->batValue, 0, (!pSensor->childName.empty()) ? pSensor->childName : "Selector Heat");
 			}
 		}
 	}
