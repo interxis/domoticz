@@ -23,11 +23,14 @@ KMTronicSerial::KMTronicSerial(const int ID, const std::string& devname)
 	m_szSerialPort=devname;
 	m_iBaudRate = 9600;
 	m_stoprequested = false;
+	m_iQueryState = 0;
+	m_retrycntr = RETRY_DELAY - 2;
+	m_bHaveReceived = false;
 }
 
 KMTronicSerial::~KMTronicSerial()
 {
-	clearReadCallback();
+
 }
 
 bool KMTronicSerial::StartHardware()
@@ -52,19 +55,7 @@ bool KMTronicSerial::StopHardware()
 		m_thread->join();
 	// Wait a while. The read thread might be reading. Adding this prevents a pointer error in the async serial class.
 	sleep_milliseconds(10);
-	if (isOpen())
-	{
-		try {
-			clearReadCallback();
-			close();
-			doClose();
-			setErrorStatus(true);
-		}
-		catch (...)
-		{
-			//Don't throw from a Stop command
-		}
-	}
+	terminate();
 	m_bIsStarted = false;
 	return true;
 }
@@ -211,7 +202,7 @@ void KMTronicSerial::GetRelayStates()
 					std::stringstream sstr;
 					int iRelay = (iBoard * 8) + ii + 1;
 					sstr << "Board" << int(iBoard + 1) << " - " << int(ii + 1);
-					SendSwitch(iRelay, 1, 255, bIsOn, (bIsOn) ? 100 : 0, sstr.str());
+					SendSwitch(iRelay, 1, 255, bIsOn, 0, sstr.str());
 					_log.Log(LOG_STATUS, "KMTronic: %s = %s", sstr.str().c_str(), (bIsOn) ? "On" : "Off");
 					if (iRelay > m_TotRelais)
 						m_TotRelais = iRelay;
@@ -247,7 +238,7 @@ void KMTronicSerial::GetRelayStates()
 			std::stringstream sstr;
 			int iRelay = (ii + 1);
 			sstr << "Relay " << iRelay;
-			SendSwitch(iRelay, 1, 255, bIsOn, (bIsOn) ? 100 : 0, sstr.str());
+			SendSwitch(iRelay, 1, 255, bIsOn, 0, sstr.str());
 			_log.Log(LOG_STATUS, "KMTronic: %s = %s", sstr.str().c_str(), (bIsOn) ? "On" : "Off");
 			if (iRelay > m_TotRelais)
 				m_TotRelais = iRelay;
@@ -275,7 +266,7 @@ void KMTronicSerial::GetRelayStates()
 					std::stringstream sstr;
 					int iRelay = ii + 1;
 					sstr << "Relay " << iRelay;
-					SendSwitch(iRelay, 1, 255, bIsOn, (bIsOn) ? 100 : 0, sstr.str());
+					SendSwitch(iRelay, 1, 255, bIsOn, 0, sstr.str());
 					_log.Log(LOG_STATUS, "KMTronic: %s = %s", sstr.str().c_str(), (bIsOn) ? "On" : "Off");
 					if (iRelay > m_TotRelais)
 						m_TotRelais = iRelay;

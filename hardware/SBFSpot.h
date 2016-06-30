@@ -13,9 +13,6 @@ public:
 private:
 	void SendMeter(const unsigned char ID1,const unsigned char ID2, const double musage, const double mtotal, const std::string &defaultname);
 	bool GetMeter(const unsigned char ID1,const unsigned char ID2, double &musage, double &mtotal);
-	void SendTempSensor(const unsigned char Idx, const float Temp, const std::string &defaultname);
-	void SendVoltage(const unsigned long Idx, const float Volt, const std::string &defaultname);
-	void SendPercentage(const unsigned long Idx, const float Percentage, const std::string &defaultname);
 
 	std::string m_SBFConfigFile;
 	std::string m_SBFInverter;
@@ -33,6 +30,7 @@ private:
 	bool StopHardware();
 	void Do_Work();
 	void GetMeterDetails();
+	int getSunRiseSunSetMinutes(const bool bGetSunRise);
 
 	void ImportOldMonthData(const unsigned long long DevID, const int Year, const int Month);
 };

@@ -17,7 +17,6 @@ CSBFSpot::CSBFSpot(const int ID, const std::string &SMAConfigFile)
 {
 	std::vector<std::string> results;
 	
-	m_SBFInverter="";
 	m_HwdID=ID;
 #ifdef WIN32
 	StringSplit(SMAConfigFile, ";", results);
@@ -161,8 +160,6 @@ char *strftime_t (const char *format, const time_t rawtime)
 
 void CSBFSpot::SendMeter(const unsigned char ID1,const unsigned char ID2, const double musage, const double mtotal, const std::string &defaultname)
 {
-	int Idx=(ID1 * 256) + ID2;
-
 	RBUF tsen;
 	memset(&tsen,0,sizeof(RBUF));
 
@@ -201,52 +198,9 @@ void CSBFSpot::SendMeter(const unsigned char ID1,const unsigned char ID2, const 
 	sDecodeRXMessage(this, (const unsigned char *)&tsen.ENERGY, defaultname.c_str(), 255);
 }
 
-void CSBFSpot::SendTempSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
-{
-	RBUF tsen;
-	memset(&tsen,0,sizeof(RBUF));
-
-	tsen.TEMP.packetlength=sizeof(tsen.TEMP)-1;
-	tsen.TEMP.packettype=pTypeTEMP;
-	tsen.TEMP.subtype=sTypeTEMP10;
-	tsen.TEMP.battery_level=9;
-	tsen.TEMP.rssi=12;
-	tsen.TEMP.id1=0;
-	tsen.TEMP.id2=Idx;
-
-	tsen.TEMP.tempsign=(Temp>=0)?0:1;
-	int at10=round(abs(Temp*10.0f));
-	tsen.TEMP.temperatureh=(BYTE)(at10/256);
-	at10-=(tsen.TEMP.temperatureh*256);
-	tsen.TEMP.temperaturel=(BYTE)(at10);
-
-	sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP, defaultname.c_str(), 255);
-}
-
-void CSBFSpot::SendVoltage(const unsigned long Idx, const float Volt, const std::string &defaultname)
-{
-	_tGeneralDevice gDevice;
-	gDevice.subtype=sTypeVoltage;
-	gDevice.id=1;
-	gDevice.floatval1=Volt;
-	gDevice.intval1 = static_cast<int>(Idx);
-	sDecodeRXMessage(this, (const unsigned char *)&gDevice, defaultname.c_str(), 255);
-}
-
-void CSBFSpot::SendPercentage(const unsigned long Idx, const float Percentage, const std::string &defaultname)
-{
-	_tGeneralDevice gDevice;
-	gDevice.subtype=sTypePercentage;
-	gDevice.id=1;
-	gDevice.floatval1=Percentage;
-	gDevice.intval1 = static_cast<int>(Idx);
-	sDecodeRXMessage(this, (const unsigned char *)&gDevice, defaultname.c_str(), 255);
-}
-
 bool CSBFSpot::GetMeter(const unsigned char ID1,const unsigned char ID2, double &musage, double &mtotal)
 {
 	int Idx=(ID1 * 256) + ID2;
-	bool bDeviceExits=true;
 	std::vector<std::vector<std::string> > result;
 	result=m_sql.safe_query("SELECT Name, sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID==%d) AND (Type==%d) AND (Subtype==%d)",
 		m_HwdID, int(Idx), int(pTypeENERGY), int(sTypeELEC2));
@@ -369,13 +323,11 @@ void CSBFSpot::ImportOldMonthData(const unsigned long long DevID, const int Year
 				char szDate[40];
 				sprintf(szDate, "%04d-%02d-%02d", year, month, day);
 
-				result = m_sql.safe_query("SELECT Value FROM Meter_Calendar WHERE (DeviceRowID==%llu) AND (Date=='%q')",
-					DevID, szDate);
+				result = m_sql.safe_query("SELECT Value FROM Meter_Calendar WHERE (DeviceRowID==%llu) AND (Date=='%q')", DevID, szDate);
 				if (result.size() == 0)
 				{
 					//Insert value into our database
-					result = m_sql.safe_query("INSERT INTO Meter_Calendar (DeviceRowID, Value, Date) VALUES ('%llu', '%llu', '%q')",
-						DevID, ulCounter, szDate);
+					m_sql.safe_query("INSERT INTO Meter_Calendar (DeviceRowID, Value, Date) VALUES ('%llu', '%llu', '%q')", DevID, ulCounter, szDate);
 					_log.Log(LOG_STATUS, "SBFSpot Import Old Month Data: Inserting %s",szDate);
 				}
 
@@ -463,6 +415,31 @@ void CSBFSpot::ImportOldMonthData(const unsigned long long DevID, const int Year
 	infile.close();
 }
 
+int CSBFSpot::getSunRiseSunSetMinutes(const bool bGetSunRise)
+{
+	std::vector<std::string> strarray;
+	std::vector<std::string> sunRisearray;
+	std::vector<std::string> sunSetarray;
+
+	if (!m_mainworker.m_LastSunriseSet.empty())
+	{
+		StringSplit(m_mainworker.m_LastSunriseSet, ";", strarray);
+		StringSplit(strarray[0], ":", sunRisearray);
+		StringSplit(strarray[1], ":", sunSetarray);
+
+		int sunRiseInMinutes = (atoi(sunRisearray[0].c_str()) * 60) + atoi(sunRisearray[1].c_str());
+		int sunSetInMinutes = (atoi(sunSetarray[0].c_str()) * 60) + atoi(sunSetarray[1].c_str());
+
+		if (bGetSunRise) {
+			return sunRiseInMinutes;
+		}
+		else {
+			return sunSetInMinutes;
+		}
+	}
+	return 0;
+}
+
 void CSBFSpot::GetMeterDetails()
 {
 	if (m_SBFDataPath.size() == 0)
@@ -477,6 +454,20 @@ void CSBFSpot::GetMeterDetails()
 	}
 
 	time_t atime = time(NULL);
+	struct tm ltime;
+	localtime_r(&atime, &ltime);
+
+	int ActHourMin = (ltime.tm_hour * 60) + ltime.tm_min;
+
+	int sunRise = getSunRiseSunSetMinutes(true);
+	int sunSet = getSunRiseSunSetMinutes(false);
+
+	//We only poll one hour before sunrise till one hour after sunset
+	if (ActHourMin + 120 < sunRise)
+		return;
+	if (ActHourMin - 120 > sunSet)
+		return;
+
 	char szLogFile[256];
 	char szDateStr[50];
 	strcpy(szDateStr, strftime_t("%Y%m%d", atime));
@@ -493,7 +484,10 @@ void CSBFSpot::GetMeterDetails()
 	infile.open(szLogFile);
 	if (!infile.is_open())
 	{
-		_log.Log(LOG_ERROR, "SBFSpot: Could not open spot file: %s", szLogFile);
+		if ((ActHourMin > sunRise) && (ActHourMin < sunSet))
+		{
+			_log.Log(LOG_ERROR, "SBFSpot: Could not open spot file: %s", szLogFile);
+		}
 		return;
 	}
 	while (!infile.eof())
@@ -586,40 +580,40 @@ void CSBFSpot::GetMeterDetails()
 		tmpString = results[16];
 		stdreplace(tmpString, ",", ".");
 		voltage = static_cast<float>(atof(tmpString.c_str()));
-		SendVoltage((InvIdx * 10) + 1, voltage, "Volt uac1");
+		SendVoltageSensor(0, (InvIdx * 10) + 1, 255, voltage, "Volt uac1");
 		tmpString = results[17];
 		stdreplace(tmpString, ",", ".");
 		voltage = static_cast<float>(atof(tmpString.c_str()));
 		if (voltage != 0) {
-			SendVoltage((InvIdx * 10) + 2, voltage, "Volt uac2");
+			SendVoltageSensor(0, (InvIdx * 10) + 2, 255, voltage, "Volt uac2");
 		}
 		tmpString = results[18];
 		stdreplace(tmpString, ",", ".");
 		voltage = static_cast<float>(atof(tmpString.c_str()));
 		if (voltage != 0) {
-			SendVoltage((InvIdx * 10) + 3, voltage, "Volt uac3");
+			SendVoltageSensor(0, (InvIdx * 10) + 3, 255, voltage, "Volt uac3");
 		}
 
 		float percentage;
 		tmpString = results[21];
 		stdreplace(tmpString, ",", ".");
 		percentage = static_cast<float>(atof(tmpString.c_str()));
-		SendPercentage((InvIdx * 10) + 1, percentage, "Efficiency");
+		SendPercentageSensor((InvIdx * 10) + 1, 0, 255, percentage, "Efficiency");
 		tmpString = results[24];
 		stdreplace(tmpString, ",", ".");
 		percentage = static_cast<float>(atof(tmpString.c_str()));
-		SendPercentage((InvIdx * 10) + 2, percentage, "Hz");
+		SendPercentageSensor((InvIdx * 10) + 2, 0, 255, percentage, "Hz");
 		tmpString = results[27];
 		stdreplace(tmpString, ",", ".");
 		percentage = static_cast<float>(atof(tmpString.c_str()));
-		SendPercentage((InvIdx * 10) + 3, percentage, "BT_Signal");
+		SendPercentageSensor((InvIdx * 10) + 3, 0, 255, percentage, "BT_Signal");
 
 		if (results.size() >= 31)
 		{
 			tmpString = results[30];
 			stdreplace(tmpString, ",", ".");
 			float temperature = static_cast<float>(atof(tmpString.c_str()));
-			SendTempSensor((InvIdx * 10) + 1, temperature, "Temperature");
+			SendTempSensor((InvIdx * 10) + 1, 255, temperature, "Temperature");
 		}
 		InvIdx++;
 	}
@@ -662,7 +656,7 @@ namespace http {
 			{
 				if (pHardware->HwdType == HTYPE_SBFSpot)
 				{
-					CSBFSpot *pSBFSpot = (CSBFSpot *)pHardware;
+					CSBFSpot *pSBFSpot = reinterpret_cast<CSBFSpot *>(pHardware);
 					pSBFSpot->ImportOldMonthData();
 				}
 			}

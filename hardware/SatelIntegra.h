@@ -54,7 +54,7 @@ private:
 	// Connects socket
 	bool ConnectToIntegra();
 	// new data is collected in Integra for selected command
-	bool IsNewData();
+	bool ReadNewData();
 	// Gets info from hardware about PCB, ETHM1 etc
 	bool GetInfo();
 	// Reads and reports zones violation
@@ -84,7 +84,7 @@ private:
 	// Reports alarms to domoticz
 	void ReportAlarm(const bool isAlarm);
 	// Reports temperatures to domoticz
-	void ReportTemperature(const int Idx, int temp);
+	void ReportTemperature(const int Idx, const int temp);
 	// arms given partitions
 	bool ArmPartitions(const int  partition, const int mode = 0);
 	// disarms given partitions

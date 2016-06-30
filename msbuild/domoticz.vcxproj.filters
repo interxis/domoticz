@@ -252,9 +252,6 @@
     <Filter Include="Devices\Nefit-Easy">
       <UniqueIdentifier>{eda6c8ec-7cdc-4897-9d23-c502aedbee4b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="tinyxpath">
-      <UniqueIdentifier>{dec41c77-32d9-454a-a9fc-a9c2de0dc4a1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="www">
       <UniqueIdentifier>{86db03ef-13cf-48f9-8cfd-9c490e22c5d2}</UniqueIdentifier>
     </Filter>
@@ -395,6 +392,30 @@
     </Filter>
     <Filter Include="XML">
       <UniqueIdentifier>{19baf552-3c12-432c-bebe-8bb25fa327d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\OpenWebNet">
+      <UniqueIdentifier>{9cd757d1-3254-4dad-8fa4-bb2ba44472dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\AtagOne">
+      <UniqueIdentifier>{604bf7b4-5455-4d54-9e9f-1b9deac8e65c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\Sterbox">
+      <UniqueIdentifier>{08a528fa-9097-40bd-abc4-800a70838c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\HttpPoller">
+      <UniqueIdentifier>{efe2b02b-141c-473d-b168-fd06058fe9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\Fitbit">
+      <UniqueIdentifier>{db856641-3bbc-455d-8a88-9955fb74e49e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\Raven">
+      <UniqueIdentifier>{0854a79e-fd9c-4b55-a9fd-93077f3bad23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\Denkovi">
+      <UniqueIdentifier>{fbed8d30-c2ae-4545-a422-68ebe2c781c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\AccuWeather">
+      <UniqueIdentifier>{3a086069-f89a-44b7-b3a8-19cb9b7509eb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1309,6 +1330,9 @@
     <ClInclude Include="..\webserver\header.hpp">
       <Filter>Webserver</Filter>
     </ClInclude>
+    <ClInclude Include="..\webserver\server_settings.hpp">
+      <Filter>Webserver</Filter>
+    </ClInclude>
     <ClInclude Include="..\webserver\utf.hpp">
       <Filter>Webserver</Filter>
     </ClInclude>
@@ -1396,9 +1420,6 @@
     <ClInclude Include="..\main\dirent_windows.h">
       <Filter>Windows</Filter>
     </ClInclude>
-    <ClInclude Include="..\hardware\BMP085.h">
-      <Filter>Devices\I2C</Filter>
-    </ClInclude>
     <ClInclude Include="..\main\EventSystem.h">
       <Filter>EventSystem</Filter>
     </ClInclude>
@@ -1470,12 +1491,6 @@
     </ClInclude>
     <ClInclude Include="..\hardware\ASyncTCP.h">
       <Filter>Devices\SerialTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="..\hardware\SolarEdgeBase.h">
-      <Filter>Devices\SolarEdge</Filter>
-    </ClInclude>
-    <ClInclude Include="..\hardware\SolarEdgeTCP.h">
-      <Filter>Devices\SolarEdge</Filter>
     </ClInclude>
     <ClInclude Include="..\hardware\TCPProxy\tcpproxy_server.h">
       <Filter>TCPProxy</Filter>
@@ -1798,6 +1813,48 @@
     <ClInclude Include="..\notifications\NotificationGCM.h">
       <Filter>Notifications</Filter>
     </ClInclude>
+    <ClInclude Include="..\hardware\openwebnet\bt_openwebnet.h">
+      <Filter>Devices\OpenWebNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\OpenWebNet.h">
+      <Filter>Devices\OpenWebNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\I2C.h">
+      <Filter>Devices\I2C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\AtagOne.h">
+      <Filter>Devices\AtagOne</Filter>
+    </ClInclude>
+    <ClInclude Include="..\webserver\fastcgi.hpp">
+      <Filter>Webserver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\Sterbox.h">
+      <Filter>Devices\Sterbox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\main\LuaHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\HttpPoller.h">
+      <Filter>Devices\HttpPoller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\RFXBase.h">
+      <Filter>Devices\RFXCom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\Fitbit.h">
+      <Filter>Devices\Fitbit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\RAVEn.h">
+      <Filter>Devices\Raven</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\S0MeterTCP.h">
+      <Filter>Devices\S0 Meter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\DenkoviSmartdenLan.h">
+      <Filter>Devices\Denkovi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\AccuWeather.h">
+      <Filter>Devices\AccuWeather</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\webserver\Base64.cpp">
@@ -1929,9 +1986,6 @@
     <ClCompile Include="..\hardware\1Wire.cpp">
       <Filter>Devices\1-Wire</Filter>
     </ClCompile>
-    <ClCompile Include="..\hardware\BMP085.cpp">
-      <Filter>Devices\I2C</Filter>
-    </ClCompile>
     <ClCompile Include="..\main\EventSystem.cpp">
       <Filter>EventSystem</Filter>
     </ClCompile>
@@ -1994,12 +2048,6 @@
     </ClCompile>
     <ClCompile Include="..\hardware\ASyncTCP.cpp">
       <Filter>Devices\SerialTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="..\hardware\SolarEdgeBase.cpp">
-      <Filter>Devices\SolarEdge</Filter>
-    </ClCompile>
-    <ClCompile Include="..\hardware\SolarEdgeTCP.cpp">
-      <Filter>Devices\SolarEdge</Filter>
     </ClCompile>
     <ClCompile Include="..\hardware\TCPProxy\tcpproxy_server.cpp">
       <Filter>TCPProxy</Filter>
@@ -2333,6 +2381,48 @@
     </ClCompile>
     <ClCompile Include="..\notifications\NotificationGCM.cpp">
       <Filter>Notifications</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\openwebnet\bt_openwebnet.cpp">
+      <Filter>Devices\OpenWebNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\OpenWebNet.cpp">
+      <Filter>Devices\OpenWebNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\I2C.cpp">
+      <Filter>Devices\I2C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\AtagOne.cpp">
+      <Filter>Devices\AtagOne</Filter>
+    </ClCompile>
+    <ClCompile Include="..\webserver\fastcgi.cpp">
+      <Filter>Webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\Sterbox.cpp">
+      <Filter>Devices\Sterbox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\main\LuaHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\HttpPoller.cpp">
+      <Filter>Devices\HttpPoller</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\RFXBase.cpp">
+      <Filter>Devices\RFXCom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\Fitbit.cpp">
+      <Filter>Devices\Fitbit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\RAVEn.cpp">
+      <Filter>Devices\Raven</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\S0MeterTCP.cpp">
+      <Filter>Devices\S0 Meter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\DenkoviSmartdenLan.cpp">
+      <Filter>Devices\Denkovi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\AccuWeather.cpp">
+      <Filter>Devices\AccuWeather</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

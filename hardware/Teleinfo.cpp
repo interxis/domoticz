@@ -175,17 +175,7 @@ bool Teleinfo::StartHardware()
 
 bool Teleinfo::StopHardware()
 {
-	if (isOpen())
-	{
-		try {
-			clearReadCallback();
-			close();
-		}
-		catch (...)
-		{
-			//Don't throw from a Stop command
-		}
-	}
+	terminate();
 	StopHeartbeatThread();
 	m_bIsStarted = false;
 	return true;
@@ -319,6 +309,12 @@ void Teleinfo::MatchLine()
                                 m_bLabel_PTEC_JB = false;
                                 m_bLabel_PTEC_JW = false;
                                 m_bLabel_PTEC_JR = true;
+                        }
+                        else
+                        {
+                                m_bLabel_PTEC_JB = false;
+                                m_bLabel_PTEC_JW = false;
+                                m_bLabel_PTEC_JR = false;
                         }
 
 			break;
