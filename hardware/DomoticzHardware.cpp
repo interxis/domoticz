@@ -291,6 +291,34 @@ void CDomoticzHardwareBase::SendDistanceSensor(const int NodeID, const int Child
 	sDecodeRXMessage(this, (const unsigned char *)&gdevice, defaultname.c_str(), BatteryLevel);
 }
 
+void CDomoticzHardwareBase::SendSwitchSelectorSensor(const int NodeID, const int ChildID, const int BatteryLevel, const unsigned int selectorValue, const std::string &defaultname)
+ {      
+ 	bool bDeviceExits = true;
+ 	std::vector<std::vector<std::string> > result;
+ 
+ 	char szTmp[30];
+ 	sprintf(szTmp, "%08X", (NodeID << 8) | ChildID);
+ 	result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (Subtype==%d)",
+ 		m_HwdID, szTmp, int(pTypeGeneralSwitch), int(sSwitchTypeSelector));
+ 	if (result.size() < 1)
+ 	{
+ 		bDeviceExits = false;
+ 	}
+ 
+ 	std::string rname;
+ 	unsigned long long devidx = m_sql.UpdateValue(m_HwdID, szTmp, 1, pTypeGeneralSwitch, sSwitchTypeSelector, 12, 255, 0, "0", rname);
+ 
+ 	if (!bDeviceExits)
+ 	{
+ 		//Set switch type to selector
+                 m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%llu)", STYPE_Selector, devidx);
+ 		//Set default device options
+                 m_sql.SetDeviceOptions(devidx, m_sql.BuildDeviceOptions("SelectorStyle:0;LevelNames:Arret|Eco|Confort", false));
+ 		m_sql.safe_query("UPDATE DeviceStatus SET Name='%q', Used=1 WHERE (ID==%llu)", defaultname.c_str(), devidx);
+ 	}
+ 
+ }
+
 void CDomoticzHardwareBase::SendTextSensor(const int NodeID, const int ChildID, const int BatteryLevel, const std::string &textMessage, const std::string &defaultname)
 {
 	bool bDeviceExits = true;

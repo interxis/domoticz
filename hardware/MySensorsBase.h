@@ -380,6 +380,8 @@ private:
 	void UpdateBlindSensorLastUpdate(const int NodeID, const int ChildID);
 	void UpdateRGBWSwitchLastUpdate(const int NodeID, const int ChildID);
 
+	bool GetSwitchSelectorValue(const int NodeID, const int ChildID, unsigned int &selector_value);
+
 	bool GetSwitchValue(const unsigned char Idx, const int SubUnit, const int sub_type, std::string &sSwitchValue);
 
 	bool GetBlindsValue(const int NodeID, const int ChildID, int &blind_value);
